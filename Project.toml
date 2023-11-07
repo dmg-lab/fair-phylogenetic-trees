@@ -1,0 +1,5 @@
+[deps]
+Gumbo = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+Oscar = "f1435218-dba5-11e9-1e4d-f1a5fab5fc13"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
