@@ -1,4 +1,4 @@
-using Revise, HTTP, Gumbo, Oscar
+using HTTP, Gumbo, Oscar
 
 # Small helper function, this will be in Oscar soon
 function graph_from_edges(T, n::Int, edges)
@@ -10,25 +10,50 @@ function graph_from_edges(T, n::Int, edges)
 end
 
 # The graphs are only available as images, hence we need to manually code them.
-TreeDict = Dict{String, Graph{Undirected}}()
-TreeDict["4-taxa-1.gif"] = graph_from_edges(Undirected, 6, [[1,3],[2,3],[3,4],[4,5],[4,6]])
+newick_dict = Dict{String, String}(
+  "MC5Stairs.gif"    => "(A:1,(B:1,(C:1,D:1,E:1):1):1);",
+  "5-taxa-nmc-1.gif" => "(A:1,B:1,C:1,D:1,E:1);",
+  "MC5Rake.gif"      => "(A:1,B:1,(C:1,(D:1,E:1):1):1);",
+  "4-taxa-mc-4.gif"  => "(A:1,(B:1,C:1,D:1):1);",
+  "3-taxa-mc-2.gif"  => "(A:1,B:1,C:1);",
+  "5-comb.gif"       => "(A:1,(B:1,(C:1,(D:1,E:1):1):1):1);",
+  "5-taxa-nmc-3.gif" => "((A:1,B:1):1,C:1,(D:1,E:1):1);",
+  "MC5Foot.gif"      => "((A:1,B:1):1,(C:1,D:1,E:1):1);",
+  "5-taxa-nmc-2.gif" => "(A:1,B:1,(C:1,D:1,E:1):1);",
+  "3-taxa.gif"       => "(A:1,B:1,C:1);",
+  "MC5Tent.gif"      => "(A:1,B:1,C:1,(D:1,E:1):1);",
+  "5-taxa-nmc-4.gif" => "((A:1,B:1):1,C:1,(D:1,E:1):1);",
+  "5-taxa-mc.gif"    => "(A:1,B:1,C:1,D:1,E:1);",
+  "4-taxa-mc-5.gif"  => "(A:1,B:1,C:1,D:1);",
+  "MC5Crane.gif"     => "(A:1,(B:1,C:1,D:1,E:1):1);",
+  "4-taxa-mc-1.gif"  => "((A:1,B:1):1,(C:1,D:1):1);",
+  "giraffe.gif"      => "((A:1,B:1):1,(C:1,(D:1,E:1):1):1);",
+  "MC5Cartwheel.gif" => "(A:1,B:1,(C:1,D:1,E:1):1);",
+  "4-taxa-1.gif"     => "(A:1,B:1,(C:1,D:1):1);",
+  "4-taxa-mc-2.gif"  => "(A:1,(B:1,(C:1,D:1):1):1);",
+  "4-taxa-2.gif"     => "(A:1,B:1,C:1,D:1);",
+  "4-taxa-mc-3.gif"  => "(A:1,B:1,(C:1,D:1):1);",
+  "MC5Anteater.gif"  => "(A:1,(B:1,C:1,(D:1,E:1):1):1);",
+  "5-fork.gif"       => "(A:1,((B:1,C:1):1,(D:1,E:1):1):1);",
+  "MC5Mirror.gif"    => "((A:1,B:1):1,C:1,(D:1,E:1):1);",
+  "3-taxa-mc-1.gif"  => "(A:1,(B:1,C:1):1);"
+)
 
+tree_dict = Dict{String, Oscar.PhylogeneticTree}(k => phylogenetic_tree(QQFieldElem, v) for (k, v) in newick_dict)
 
 # Main data object
 struct SmallTreeModel 
     name::String
-    tree::Union{Graph{Undirected}, String}
+    tree::PhylogeneticTree
     invariants::Dict{String, Union{Int, Nothing}}
     param_probability_coordinates::Vector{QQMPolyRingElem}
     param_fourier_coordinates::Vector{QQMPolyRingElem}
 end
 
-
 function is_model_page(content_string::String)
     m = match(r"<li><a href=\"([^\"]*)\">Singular file</a>", content_string)
     return !isnothing(m)
 end
-
 
 function retrieve_model(sr::String)
     content = parsehtml(sr)
@@ -115,22 +140,27 @@ mod = retrieve_model(sr)
 
 
 
-# # Small loop that can detect which URLs exist
-# mods = SmallTreeModel[]
-# for i in 0:30
-#     try
-#         local url = base_url * "small-trees_$i.html"
-#         println(url)
-#         local r = HTTP.request("GET", url)
-#         println("$i exists")
-#         local sr = String(r.body)
-#         println("Contains model? $(is_model_page(sr))")
-#         if is_model_page(sr)
-#             local mod = retrieve_model(sr)
-#             push!(mods, mod)
-#         end
-#     catch e
-#         println("$i does not exist $e")
-#     end
-# end
+ # Small loop that can detect which URLs exist
+ mods = SmallTreeModel[]
+ for i in 0:30
+     try
+         local url = base_url * "small-trees_$i.html"
+         println(url)
+         local r = HTTP.request("GET", url)
+         println("$i exists")
+         local sr = String(r.body)
+         println("Contains model? $(is_model_page(sr))")
+         if is_model_page(sr)
+             local mod = retrieve_model(sr)
+             push!(mods, mod)
+         end
+     catch e
+         println("$i does not exist $e")
+     end
+ end
 
+new_tree_dict = Dict{String, Oscar.PhylogeneticTree{QQFieldElem}}()
+for (k, v) in tree_dict
+    println(k)
+    new_tree_dict[k] = phylogenetic_tree(QQFieldElem, v)
+end
